@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEQUUS - Trading Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;700&family=Germania+One&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Dark Earth Tones -->
+    <!-- Application Structure Plan: A minimalist, single-page application focused on a central control panel. This design choice removes all non-essential elements to create a focused, artistic, and less cluttered user experience, inspired by the user's latest design reference. -->
+    <!-- Visualization & Content Choices: The application now uses typography and layout as the primary visual elements. Charts and excessive cards have been removed to align with the minimalist aesthetic. Key data is presented in a "Live Summary" card that updates dynamically. This choice prioritizes clarity and focus over data density. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #3D405B, #5C2B29, #334C33, #274060); /* Earth Tones: Slate, Maroon, Forest Green, Cobalt */
+            background-size: 300% 300%;
+            animation: gradient-animation 20s ease infinite;
+            color: #EAE0D5; /* Beige */
+            overflow-x: hidden;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .title-letter {
+            font-family: 'Germania One', cursive;
+            position: absolute;
+            color: rgba(0,0,0,0.35);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .niche-font {
+            font-family: 'Anton', sans-serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .stat-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(234, 224, 213, 0.2);
+            border-radius: 1rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        input, select {
+            border-radius: 0.5rem;
+            border: 1px solid rgba(234, 224, 213, 0.3);
+            background-color: rgba(0,0,0,0.3);
+            color: #EAE0D5;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(1);
+        }
+        input:disabled, select:disabled {
+            background-color: rgba(0,0,0,0.2);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .progress-bar-bg {
+             background-color: rgba(0,0,0,0.3);
+             border-radius: 9999px;
+        }
+        #progress-bar {
+            border-radius: 9999px;
+            background-color: #81B29A; /* Muted Green */
+        }
+        .button {
+            border: 1px solid rgba(234, 224, 213, 0.3);
+            background-color: rgba(234, 224, 213, 0.1);
+            transition: all 0.2s;
+            padding: 10px 20px;
+            color: #EAE0D5;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        .button:hover {
+            background-color: #EAE0D5;
+            color: #171717;
+        }
+        input[type=range] {
+            appearance: none;
+            -webkit-appearance: none;
+            background: transparent;
+            cursor: pointer;
+            width: 100%;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            background: rgba(234, 224, 213, 0.2);
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            margin-top: -8px;
+            background-color: #81B29A; /* Muted Green */
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            border: 2px solid #EAE0D5;
+        }
+        .chart-container {
+            position: relative;
+        }
+        @keyframes glow-yellow { 50% { border-color: #FBBF24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); } }
+        .glowing-border { animation: glow-yellow 2.5s infinite; }
+        @keyframes blink-red { 50% { color: #EF4444; text-shadow: 0 0 10px #EF4444; } }
+        .blinking-red { animation: blink-red 0.5s infinite; }
+        @keyframes blink-pink { 50% { color: #EC4899; text-shadow: 0 0 10px #EC4899; } }
+        .blinking-pink { animation: blink-pink 1s infinite; }
+        @keyframes blink-yellow { 50% { color: #F59E0B; text-shadow: 0 0 10px #F59E0B; } }
+        .blinking-yellow { animation: blink-yellow 1.5s infinite; }
+        @keyframes glow-green { 50% { color: #81B29A; text-shadow: 0 0 12px #81B29A; } }
+        .glowing-green { animation: glow-green 2s infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="relative">
+        <header class="absolute inset-0">
+            <span class="title-letter" style="left: -2%; top: 15%; font-size: 30rem; transform: rotate(-15deg);">T</span>
+            <span class="title-letter" style="left: 18%; top: 10%; font-size: 8rem; transform: rotate(-8deg);">r</span>
+            <span class="title-letter" style="left: 25%; top: 5%; font-size: 9rem; transform: rotate(-4deg);">a</span>
+            <span class="title-letter" style="left: 33%; top: 2%; font-size: 10rem;">d</span>
+            <span class="title-letter" style="left: 41%; top: 2%; font-size: 11rem;">i</span>
+            <span class="title-letter" style="left: 46%; top: 5%; font-size: 12rem; transform: rotate(4deg);">n</span>
+            <span class="title-letter" style="left: 55%; top: 12%; font-size: 13rem; transform: rotate(8deg);">g</span>
+            
+            <span class="title-letter" style="left: 15%; top: 55%; font-size: 16rem; transform: rotate(15deg);">P</span>
+            <span class="title-letter" style="left: 32%; top: 60%; font-size: 18rem; transform: rotate(8deg);">l</span>
+            <span class="title-letter" style="left: 48%; top: 65%; font-size: 20rem; transform: rotate(0deg);">a</span>
+            <span class="title-letter" style="right: -5%; top: 55%; font-size: 40rem; transform: rotate(-10deg);">n</span>
+        </header>
+
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
+
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-48 md:mt-32">
+                
+                <div class="lg:col-span-1 space-y-6">
+                    <div id="controls-card" class="stat-card p-6">
+                        <h2 class="niche-font text-2xl mb-4 text-center">Anticipated date to Pass</h2>
+                        <div class="flex flex-col items-center gap-2 md:col-span-2">
+                             <input type="date" id="target-date-input" class="focus:border-orange-500 focus:ring-0 text-lg p-2 text-center w-full">
+                             <p id="business-days-info" class="font-semibold h-6 text-sm text-center text-neutral-300"></p>
+                         </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div class="flex flex-col items-center gap-2">
+                                <label for="rr-ratio-input" class="text-lg niche-font">R:R Ratio</label>
+                                <div class="flex items-center gap-2 text-lg">
+                                    <span class="font-semibold">1 :</span>
+                                    <input type="number" id="rr-ratio-input" value="1.5" step="0.1" min="0.1" class="w-24 focus:border-orange-500 focus:ring-0 text-lg p-2 text-center">
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center gap-2">
+                                <label for="contract-type-select" class="text-lg niche-font">Instrument</label>
+                                <select id="contract-type-select" class="text-lg p-2 text-center w-full">
+                                    <option value="NQ">NQ</option>
+                                    <option value="MNQ" selected>MNQ</option>
+                                    <option value="ES">ES</option>
+                                    <option value="MES">MES</option>
+                                    <option value="RTY">RTY</option>
+                                    <option value="M2K">M2K</option>
+                                    <option value="YM">YM</option>
+                                    <option value="MYM">MYM</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 flex flex-col items-center gap-2">
+                                <label for="obtained-profit-input" class="text-lg niche-font">P/L Entry</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-400 pointer-events-none text-lg">$</span>
+                                    <input type="number" id="obtained-profit-input" class="log-input w-full pl-7 pr-2 py-2 focus:border-orange-500 focus:ring-0 text-lg" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                         <div class="text-center mt-6">
+                            <button id="reset-btn" class="button">Reset</button>
+                        </div>
+                    </div>
+                     <div class="stat-card p-6">
+                        <h2 class="niche-font text-2xl mb-4">Position Sizing</h2>
+                        <div class="flex items-center space-x-4 my-4">
+                            <label for="contract-slider" class="font-semibold whitespace-nowrap">1</label>
+                            <input id="contract-slider" type="range" min="1" max="20" value="1">
+                            <label for="contract-slider" class="font-semibold whitespace-nowrap">20</label>
+                        </div>
+                        <div class="text-center mt-3 font-semibold text-lg">
+                            <span id="contract-count" class="text-teal-300 data-font">1</span> Contract(s)
+                        </div>
+                        <hr class="my-4 border-white/20">
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div>
+                                <p class="text-sm font-medium text-neutral-400">Total Pts to Liq.</p>
+                                <p id="total-points-to-liquidation" class="text-3xl font-bold data-font">500</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-neutral-400">Pts/Trade to Liq.</p>
+                                <p id="points-per-trade-to-liquidation" class="text-3xl font-bold data-font">500</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="stat-card p-6">
+                        <h2 class="niche-font text-2xl mb-4">Live Summary</h2>
+                        <div class="space-y-4">
+                            <div>
+                                 <span class="text-sm text-neutral-300">Live Balance:</span>
+                                 <span id="current-balance" class="font-bold text-2xl data-font block">$25,000.00</span>
+                            </div>
+                            <div class="relative w-full progress-bar-bg h-2">
+                                <div id="progress-bar" class="h-full transition-all duration-500 ease-out" style="width: 50%;"></div>
+                            </div>
+                            <div class="flex justify-between text-xs font-bold">
+                                <span class="text-orange-400 data-font">LIQUIDATION: $24,500</span>
+                                <span class="text-teal-300 data-font">TARGET: $26,500</span>
+                            </div>
+                             <div id="status-message" class="text-center font-bold text-2xl niche-font pt-2 hidden"></div>
+                        </div>
+                         <div class="grid grid-cols-3 gap-4 text-center border-t border-white/10 pt-4 mt-4">
+                             <div>
+                                <h3 class="niche-font text-lg">Daily Risk</h3>
+                                <p id="daily-risk" class="text-2xl font-bold text-orange-400 data-font"></p>
+                             </div>
+                             <div>
+                                <h3 class="niche-font text-lg">Daily Profit</h3>
+                                <p id="daily-profit" class="text-2xl font-bold text-teal-300 data-font"></p>
+                             </div>
+                              <div>
+                                <h3 class="niche-font text-lg">Needed For Target</h3>
+                                <p id="summary-needed-for-target" class="text-2xl font-bold text-teal-300 data-font"></p>
+                             </div>
+                         </div>
+                    </div>
+                    <div class="stat-card p-6">
+                        <h2 class="niche-font text-2xl mb-4">Leverage Impact & Psyche</h2>
+                        <div class="chart-container" style="height: 30vh; max-height: 250px;">
+                            <div id="psychological-impact" class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10 p-2 pointer-events-none">
+                                <h3 id="psyche-zone-title" class="font-bold niche-font opacity-80 transition-all duration-300" style="font-size: clamp(2rem, 10vw, 4rem);"></h3>
+                            </div>
+                            <canvas id="leverageImpactChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialAccountBalance = 25000;
+            const liquidationBalance = 24500;
+            const targetBalance = 26500;
+
+            const contractPrices = { NQ: 20, MNQ: 2, ES: 50, MES: 5, RTY: 50, M2K: 5, YM: 5, MYM: 0.50 };
+            let pricePerPoint = 2;
+
+            let currentRRRatio = 1.5;
+            let numberOfBusinessDays = 0;
+            let leverageImpactChart;
+
+            const dailyRiskEl = document.getElementById('daily-risk');
+            const dailyProfitEl = document.getElementById('daily-profit');
+            const totalBalanceEl = document.getElementById('current-balance');
+            const progressBar = document.getElementById('progress-bar');
+            const statusMessageEl = document.getElementById('status-message');
+            const targetDateInput = document.getElementById('target-date-input');
+            const businessDaysInfoEl = document.getElementById('business-days-info');
+            const obtainedProfitInput = document.getElementById('obtained-profit-input');
+            const resetBtn = document.getElementById('reset-btn');
+            const rrRatioInput = document.getElementById('rr-ratio-input');
+            const contractSlider = document.getElementById('contract-slider');
+            const contractCountEl = document.getElementById('contract-count');
+            const totalPointsToLiquidationEl = document.getElementById('total-points-to-liquidation');
+            const pointsPerTradeToLiquidationEl = document.getElementById('points-per-trade-to-liquidation');
+            const psycheZoneTitleEl = document.getElementById('psyche-zone-title');
+            const contractTypeSelect = document.getElementById('contract-type-select');
+            const controlsCard = document.getElementById('controls-card');
+            const summaryNeededForTargetEl = document.getElementById('summary-needed-for-target');
+            
+            function formatCurrency(value) {
+                return `$${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+
+             function formatPoints(value) {
+                return Number.isInteger(value) ? value : value.toFixed(1);
+            }
+
+            function setControlsDisabled(disabled) {
+                targetDateInput.disabled = disabled;
+                obtainedProfitInput.disabled = disabled;
+                rrRatioInput.disabled = disabled;
+                contractSlider.disabled = disabled;
+                contractTypeSelect.disabled = disabled;
+            }
+
+            function calculateBusinessDays(startDate, endDate) {
+                let count = 0;
+                const curDate = new Date(startDate.getTime());
+                while (curDate <= endDate) {
+                    const dayOfWeek = curDate.getDay();
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        count++;
+                    }
+                    curDate.setDate(curDate.getDate() + 1);
+                }
+                return count;
+            }
+
+            function updateDashboard() {
+                localStorage.setItem('obtainedProfit', obtainedProfitInput.value);
+                localStorage.setItem('rrRatio', rrRatioInput.value);
+                localStorage.setItem('contractType', contractTypeSelect.value);
+
+                const accumulatedProfit = parseFloat(obtainedProfitInput.value) || 0;
+                currentRRRatio = parseFloat(rrRatioInput.value) || 1.5;
+                const selectedContract = contractTypeSelect.value;
+                pricePerPoint = contractPrices[selectedContract] || 2;
+
+                const currentBalance = initialAccountBalance + accumulatedProfit;
+                const currentTotalRiskCapital = currentBalance - liquidationBalance;
+                
+                totalBalanceEl.textContent = formatCurrency(currentBalance);
+                
+                const totalSpan = targetBalance - liquidationBalance;
+                const progress = currentBalance - liquidationBalance;
+                let progressPercent = (progress / totalSpan) * 100;
+                progressPercent = Math.max(0, Math.min(100, progressPercent));
+                progressBar.style.width = `${progressPercent}%`;
+
+                if (currentBalance <= liquidationBalance) {
+                    statusMessageEl.textContent = 'ACCOUNT LIQUIDATED';
+                    statusMessageEl.className = 'text-center font-bold text-2xl niche-font pt-2 text-orange-400';
+                    setControlsDisabled(true);
+                } else if (currentBalance >= targetBalance) {
+                    statusMessageEl.textContent = 'PROFIT TARGET REACHED';
+                    statusMessageEl.className = 'text-center font-bold text-2xl niche-font pt-2 text-teal-300';
+                    setControlsDisabled(true);
+                } else {
+                     statusMessageEl.className = 'text-center font-bold text-2xl niche-font pt-2 hidden';
+                     setControlsDisabled(false);
+                }
+
+                const remainingProfitTarget = Math.max(0, targetBalance - currentBalance);
+                const neededForTargetInPoints = remainingProfitTarget / pricePerPoint;
+                summaryNeededForTargetEl.innerHTML = `${formatCurrency(remainingProfitTarget)} <span class="text-sm text-neutral-400">/ ${formatPoints(neededForTargetInPoints)} pts</span>`;
+
+                const dailyProfit = numberOfBusinessDays > 0 && remainingProfitTarget > 0 ? remainingProfitTarget / numberOfBusinessDays : 0;
+                const dailyProfitInPoints = dailyProfit / pricePerPoint;
+                dailyProfitEl.innerHTML = `${formatCurrency(dailyProfit)} <span class="text-lg text-neutral-400">/ ${formatPoints(dailyProfitInPoints)} pts</span>`;
+                
+                const dailyRisk = dailyProfit > 0 ? dailyProfit / currentRRRatio : 0;
+                const dailyRiskInPoints = dailyRisk / pricePerPoint;
+                dailyRiskEl.innerHTML = `${formatCurrency(dailyRisk)} <span class="text-lg text-neutral-400">/ ${formatPoints(dailyRiskInPoints)} pts</span>`;
+
+                const currentContracts = parseInt(contractSlider.value);
+                contractCountEl.textContent = currentContracts;
+                const pointsPerTradeToLiquidation = currentTotalRiskCapital > 0 ? currentTotalRiskCapital / (currentContracts * pricePerPoint) : 0;
+                const totalPointsToLiquidation = currentTotalRiskCapital > 0 ? currentTotalRiskCapital / pricePerPoint : 0;
+                
+                pointsPerTradeToLiquidationEl.textContent = formatPoints(pointsPerTradeToLiquidation);
+                totalPointsToLiquidationEl.textContent = formatPoints(totalPointsToLiquidation);
+                
+                pointsPerTradeToLiquidationEl.className = 'text-3xl font-bold data-font transition-all duration-300';
+                if (pointsPerTradeToLiquidation <= 10) {
+                    pointsPerTradeToLiquidationEl.classList.add('blinking-red');
+                } else if (pointsPerTradeToLiquidation <= 20) {
+                    pointsPerTradeToLiquidationEl.classList.add('blinking-pink');
+                } else if (pointsPerTradeToLiquidation <= 45) {
+                    pointsPerTradeToLiquidationEl.classList.add('blinking-yellow');
+                } else if (pointsPerTradeToLiquidation <= 55) {
+                    pointsPerTradeToLiquidationEl.classList.add('text-yellow-400');
+                } else if (pointsPerTradeToLiquidation <= 80) {
+                    pointsPerTradeToLiquidationEl.classList.add('glowing-green');
+                } else {
+                    pointsPerTradeToLiquidationEl.classList.add('text-green-400');
+                }
+                
+                const maxPointsPerPosition = dailyRisk > 0 ? dailyRisk / (currentContracts * pricePerPoint) : 0;
+                psycheZoneTitleEl.className = 'font-bold niche-font opacity-80 transition-all duration-300';
+                psycheZoneTitleEl.style.fontSize = 'clamp(2rem, 10vw, 4rem)';
+                
+                psycheZoneTitleEl.classList.remove('text-green-400', 'text-teal-300', 'text-cyan-400', 'text-yellow-400', 'text-amber-500', 'text-orange-500', 'text-red-500', 'text-red-600');
+                
+                if (maxPointsPerPosition >= 90) {
+                    psycheZoneTitleEl.textContent = 'Calm Composure';
+                    psycheZoneTitleEl.classList.add('text-green-400');
+                } else if (maxPointsPerPosition >= 70) {
+                    psycheZoneTitleEl.textContent = 'Poised';
+                    psycheZoneTitleEl.classList.add('text-teal-300');
+                } else if (maxPointsPerPosition >= 35) {
+                    psycheZoneTitleEl.textContent = 'Vigilant';
+                    psycheZoneTitleEl.classList.add('text-cyan-400');
+                } else if (maxPointsPerPosition >= 20) {
+                    psycheZoneTitleEl.textContent = 'Desperate Focus';
+                    psycheZoneTitleEl.classList.add('text-yellow-400');
+                } else if (maxPointsPerPosition >= 15) {
+                    psycheZoneTitleEl.textContent = 'Wary';
+                    psycheZoneTitleEl.classList.add('text-amber-500');
+                } else if (maxPointsPerPosition >= 10) {
+                    psycheZoneTitleEl.textContent = 'Apprehensive';
+                    psycheZoneTitleEl.classList.add('text-orange-500');
+                } else if (maxPointsPerPosition >= 5) {
+                    psycheZoneTitleEl.textContent = 'Panic';
+                    psycheZoneTitleEl.classList.add('text-red-500');
+                } else {
+                    psycheZoneTitleEl.textContent = 'YOLO';
+                    psycheZoneTitleEl.classList.add('text-red-600');
+                }
+                 updateLeverageChart(dailyRisk);
+            }
+            
+            function createLeverageChart() {
+                const ctx = document.getElementById('leverageImpactChart').getContext('2d');
+                leverageImpactChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Max Points Per Position', data: [],
+                            borderColor: '#E07A5F',
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) { return null; }
+                                const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+                                gradient.addColorStop(0, '#81B29A');
+                                gradient.addColorStop(0.5, '#F59E0B');
+                                gradient.addColorStop(1, '#B91C1C');
+                                return gradient;
+                            },
+                            fill: false, tension: 0.1, pointRadius: 0,
+                            borderWidth: 3
+                        }, {
+                            label: 'Current Position', data: [],
+                            backgroundColor: '#EAE0D5', borderColor: '#EAE0D5',
+                            pointRadius: 7, pointHoverRadius: 9, borderWidth: 2, type: 'line'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                         scales: {
+                            x: {
+                               title: { display: true, text: 'Contracts', font: { weight: 'bold' }, color: '#EAE0D5' },
+                               grid: { display: false },
+                               ticks: { color: '#EAE0D5' }
+                            },
+                            y: {
+                               title: { display: true, text: 'Max Points', font: { weight: 'bold' }, color: '#EAE0D5' },
+                               beginAtZero: true,
+                               grid: { color: 'rgba(234, 224, 213, 0.1)' },
+                               ticks: { color: '#EAE0D5' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                             tooltip: {
+                                filter: (item) => item.datasetIndex === 1,
+                                callbacks: { label: (context) => ` ${context.parsed.y.toFixed(1)} pts @ ${context.label} contracts` }
+                            }
+                        }
+                    }
+                });
+            }
+
+             function updateLeverageChart(dailyRisk) {
+                const labels = [];
+                const lineData = [];
+                const pointData = [];
+                const currentContracts = parseInt(contractSlider.value);
+                const selectedContract = contractTypeSelect.value;
+                pricePerPoint = contractPrices[selectedContract] || 2;
+
+
+                for (let i = 1; i <= 20; i++) {
+                    labels.push(i);
+                    const points = dailyRisk > 0 ? dailyRisk / (i * pricePerPoint) : 0;
+                    lineData.push(points);
+                    pointData.push(i === currentContracts ? points : null);
+                }
+                if (leverageImpactChart) {
+                    leverageImpactChart.data.labels = labels;
+                    leverageImpactChart.data.datasets[0].data = lineData;
+                    leverageImpactChart.data.datasets[1].data = pointData;
+                    leverageImpactChart.update();
+                }
+            }
+
+            obtainedProfitInput.value = localStorage.getItem('obtainedProfit') || '';
+            rrRatioInput.value = localStorage.getItem('rrRatio') || '1.5';
+            contractTypeSelect.value = localStorage.getItem('contractType') || 'MNQ';
+
+            createLeverageChart();
+            controlsCard.classList.add('glowing-border');
+            updateDashboard();
+
+            targetDateInput.addEventListener('change', () => {
+                const selectedDate = new Date(targetDateInput.value + "T00:00:00");
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                if (targetDateInput.value && selectedDate >= today) {
+                    numberOfBusinessDays = calculateBusinessDays(today, selectedDate);
+                    businessDaysInfoEl.textContent = `Plan duration: ${numberOfBusinessDays} business day(s).`;
+                    controlsCard.classList.remove('glowing-border');
+                } else {
+                    numberOfBusinessDays = 0;
+                    businessDaysInfoEl.textContent = 'Please select a future date.';
+                    controlsCard.classList.add('glowing-border');
+                }
+                updateDashboard();
+            });
+
+            obtainedProfitInput.addEventListener('input', updateDashboard);
+            rrRatioInput.addEventListener('input', updateDashboard);
+            contractSlider.addEventListener('input', updateDashboard);
+            contractTypeSelect.addEventListener('change', updateDashboard);
+            
+            resetBtn.addEventListener('click', () => {
+                 if (confirm('Are you sure you want to reset your P/L? This will revert to a planning state.')) {
+                    obtainedProfitInput.value = '';
+                    localStorage.removeItem('obtainedProfit');
+                    targetDateInput.value = '';
+                    businessDaysInfoEl.textContent = '';
+                    numberOfBusinessDays = 0;
+                    controlsCard.classList.add('glowing-border');
+                    setControlsDisabled(false);
+                    updateDashboard();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+
