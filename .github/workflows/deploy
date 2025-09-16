@@ -1,0 +1,46 @@
+# This is a simple workflow to deploy a static HTML site to GitHub Pages.
+# It does not include a build step, as the HTML is already complete.
+
+name: Deploy Static HTML to GitHub Pages
+
+on:
+  # This workflow runs automatically on pushes to the "main" branch.
+  push:
+    branches: ["main"]
+
+  # This allows you to run the workflow manually from the "Actions" tab if needed.
+  workflow_dispatch:
+
+# Set the permissions necessary for the Action to deploy to GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # This is the single "deploy" job.
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out your repository's code.
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      # Step 2: Prepare your HTML file to be hosted.
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      # Step 3: Upload your HTML file as an "artifact" for deployment.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # This uploads everything from the root of your repository.
+          path: '.' 
+          
+      # Step 4: Deploy the uploaded artifact to GitHub Pages.
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
